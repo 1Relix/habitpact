@@ -112,7 +112,7 @@ function BottomNav() {
     { to: "/settings", label: "Settings", icon: "⚙️" },
   ];
   return (
-    <nav className="fixed bottom-0 left-1/2 z-40 w-full max-w-[480px] -translate-x-1/2 px-3 pb-[max(env(safe-area-inset-bottom),12px)] pt-2">
+    <nav className="fixed bottom-0 left-1/2 z-40 w-full max-w-[480px] -translate-x-1/2 px-3 pb-[max(env(safe-area-inset-bottom),12px)] pt-2 md:hidden">
       <div className="glass card-elev flex items-center justify-around rounded-full border border-border px-2 py-1.5">
         {tabs.map((t) => {
           const active = path === t.to || (t.to !== "/" && path.startsWith(t.to));
@@ -150,7 +150,22 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="mx-auto min-h-screen w-full max-w-[480px] pb-32">
+      <div className="mx-auto min-h-screen w-full max-w-[480px] md:max-w-[1200px] md:px-6 pb-32">
+        <div className="hidden md:flex items-center justify-between gap-4 rounded-3xl border border-border bg-surface/80 px-4 py-4 mb-6">
+          <div className="text-xl font-semibold">Pact</div>
+          <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+            <Link to="/" className="text-foreground transition hover:text-accent">Today</Link>
+            <Link to="/analytics" className="transition hover:text-accent">Stats</Link>
+            <Link to="/social" className="transition hover:text-accent">Friends</Link>
+            <Link to="/settings" className="transition hover:text-accent">Settings</Link>
+          </div>
+          <Link
+            to="/new"
+            className="rounded-full bg-accent px-4 py-2 text-sm font-semibold text-accent-foreground transition hover:brightness-105"
+          >
+            New pact
+          </Link>
+        </div>
         <Outlet />
         <BottomNav />
       </div>
