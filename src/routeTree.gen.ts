@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SocialRouteImport } from './routes/social'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as NewRouteImport } from './routes/new'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as IndexRouteImport } from './routes/index'
@@ -18,6 +19,11 @@ import { Route as PactIdRouteImport } from './routes/pact.$id'
 const SocialRoute = SocialRouteImport.update({
   id: '/social',
   path: '/social',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NewRoute = NewRouteImport.update({
@@ -45,6 +51,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
   '/new': typeof NewRoute
+  '/settings': typeof SettingsRoute
   '/social': typeof SocialRoute
   '/pact/$id': typeof PactIdRoute
 }
@@ -52,6 +59,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
   '/new': typeof NewRoute
+  '/settings': typeof SettingsRoute
   '/social': typeof SocialRoute
   '/pact/$id': typeof PactIdRoute
 }
@@ -60,21 +68,30 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
   '/new': typeof NewRoute
+  '/settings': typeof SettingsRoute
   '/social': typeof SocialRoute
   '/pact/$id': typeof PactIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/analytics' | '/new' | '/social' | '/pact/$id'
+  fullPaths: '/' | '/analytics' | '/new' | '/settings' | '/social' | '/pact/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/analytics' | '/new' | '/social' | '/pact/$id'
-  id: '__root__' | '/' | '/analytics' | '/new' | '/social' | '/pact/$id'
+  to: '/' | '/analytics' | '/new' | '/settings' | '/social' | '/pact/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/analytics'
+    | '/new'
+    | '/settings'
+    | '/social'
+    | '/pact/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AnalyticsRoute: typeof AnalyticsRoute
   NewRoute: typeof NewRoute
+  SettingsRoute: typeof SettingsRoute
   SocialRoute: typeof SocialRoute
   PactIdRoute: typeof PactIdRoute
 }
@@ -86,6 +103,13 @@ declare module '@tanstack/react-router' {
       path: '/social'
       fullPath: '/social'
       preLoaderRoute: typeof SocialRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/new': {
@@ -123,6 +147,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AnalyticsRoute: AnalyticsRoute,
   NewRoute: NewRoute,
+  SettingsRoute: SettingsRoute,
   SocialRoute: SocialRoute,
   PactIdRoute: PactIdRoute,
 }
