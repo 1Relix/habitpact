@@ -9,11 +9,17 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SocialRouteImport } from './routes/social'
 import { Route as NewRouteImport } from './routes/new'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PactIdRouteImport } from './routes/pact.$id'
 
+const SocialRoute = SocialRouteImport.update({
+  id: '/social',
+  path: '/social',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const NewRoute = NewRouteImport.update({
   id: '/new',
   path: '/new',
@@ -39,12 +45,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
   '/new': typeof NewRoute
+  '/social': typeof SocialRoute
   '/pact/$id': typeof PactIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
   '/new': typeof NewRoute
+  '/social': typeof SocialRoute
   '/pact/$id': typeof PactIdRoute
 }
 export interface FileRoutesById {
@@ -52,25 +60,34 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
   '/new': typeof NewRoute
+  '/social': typeof SocialRoute
   '/pact/$id': typeof PactIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/analytics' | '/new' | '/pact/$id'
+  fullPaths: '/' | '/analytics' | '/new' | '/social' | '/pact/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/analytics' | '/new' | '/pact/$id'
-  id: '__root__' | '/' | '/analytics' | '/new' | '/pact/$id'
+  to: '/' | '/analytics' | '/new' | '/social' | '/pact/$id'
+  id: '__root__' | '/' | '/analytics' | '/new' | '/social' | '/pact/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AnalyticsRoute: typeof AnalyticsRoute
   NewRoute: typeof NewRoute
+  SocialRoute: typeof SocialRoute
   PactIdRoute: typeof PactIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/social': {
+      id: '/social'
+      path: '/social'
+      fullPath: '/social'
+      preLoaderRoute: typeof SocialRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/new': {
       id: '/new'
       path: '/new'
@@ -106,6 +123,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AnalyticsRoute: AnalyticsRoute,
   NewRoute: NewRoute,
+  SocialRoute: SocialRoute,
   PactIdRoute: PactIdRoute,
 }
 export const routeTree = rootRouteImport
