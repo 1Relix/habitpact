@@ -10,12 +10,18 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as NewRouteImport } from './routes/new'
+import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PactIdRouteImport } from './routes/pact.$id'
 
 const NewRoute = NewRouteImport.update({
   id: '/new',
   path: '/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AnalyticsRoute = AnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -31,30 +37,34 @@ const PactIdRoute = PactIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/analytics': typeof AnalyticsRoute
   '/new': typeof NewRoute
   '/pact/$id': typeof PactIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/analytics': typeof AnalyticsRoute
   '/new': typeof NewRoute
   '/pact/$id': typeof PactIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/analytics': typeof AnalyticsRoute
   '/new': typeof NewRoute
   '/pact/$id': typeof PactIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/new' | '/pact/$id'
+  fullPaths: '/' | '/analytics' | '/new' | '/pact/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/new' | '/pact/$id'
-  id: '__root__' | '/' | '/new' | '/pact/$id'
+  to: '/' | '/analytics' | '/new' | '/pact/$id'
+  id: '__root__' | '/' | '/analytics' | '/new' | '/pact/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AnalyticsRoute: typeof AnalyticsRoute
   NewRoute: typeof NewRoute
   PactIdRoute: typeof PactIdRoute
 }
@@ -66,6 +76,13 @@ declare module '@tanstack/react-router' {
       path: '/new'
       fullPath: '/new'
       preLoaderRoute: typeof NewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/analytics': {
+      id: '/analytics'
+      path: '/analytics'
+      fullPath: '/analytics'
+      preLoaderRoute: typeof AnalyticsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -87,6 +104,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AnalyticsRoute: AnalyticsRoute,
   NewRoute: NewRoute,
   PactIdRoute: PactIdRoute,
 }
