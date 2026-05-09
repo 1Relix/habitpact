@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useLocation,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -12,21 +13,19 @@ import appCss from "../styles.css?url";
 
 function NotFoundComponent() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
-        <h1 className="text-7xl font-bold text-foreground">404</h1>
-        <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
+    <div className="flex min-h-screen items-center justify-center bg-background px-6">
+      <div className="max-w-sm text-center">
+        <h1 className="display text-7xl font-bold gradient-text">404</h1>
+        <h2 className="mt-3 text-lg font-semibold">This pact doesn't exist</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          The page you're looking for doesn't exist or has been moved.
+          The page you're chasing isn't here. Head back to your dashboard.
         </p>
-        <div className="mt-6">
-          <Link
-            to="/"
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            Go home
-          </Link>
-        </div>
+        <Link
+          to="/"
+          className="mt-6 inline-flex items-center justify-center rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-accent-foreground"
+        >
+          Go to dashboard
+        </Link>
       </div>
     </div>
   );
@@ -35,31 +34,22 @@ function NotFoundComponent() {
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
-
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
-        <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          This page didn't load
-        </h1>
+    <div className="flex min-h-screen items-center justify-center bg-background px-6">
+      <div className="max-w-sm text-center">
+        <h1 className="text-xl font-semibold tracking-tight">Something broke</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Something went wrong on our end. You can try refreshing or head back home.
+          Don't worry — your pacts are safe. Try reloading.
         </p>
-        <div className="mt-6 flex flex-wrap justify-center gap-2">
+        <div className="mt-6 flex justify-center gap-2">
           <button
-            onClick={() => {
-              router.invalidate();
-              reset();
-            }}
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            onClick={() => { router.invalidate(); reset(); }}
+            className="rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-accent-foreground"
           >
             Try again
           </button>
-          <a
-            href="/"
-            className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
-          >
-            Go home
+          <a href="/" className="rounded-full border border-border px-5 py-2.5 text-sm font-semibold">
+            Home
           </a>
         </div>
       </div>
@@ -71,21 +61,20 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
+      { name: "theme-color", content: "#1a1d22" },
+      { title: "Pact — Stake your habits" },
+      { name: "description", content: "Put money on your habits. Show up, or your stake goes to someone you trust. Inspired by Atomic Habits and behavioral psychology." },
+      { property: "og:title", content: "Pact — Stake your habits" },
+      { property: "og:description", content: "Loss aversion meets habit formation. Build streaks, break doomscrolling, keep your money." },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [
-      {
-        rel: "stylesheet",
-        href: appCss,
-      },
+      { rel: "stylesheet", href: appCss },
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" },
     ],
   }),
   shellComponent: RootShell,
@@ -96,11 +85,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className="dark">
       <head>
         <HeadContent />
       </head>
-      <body>
+      <body className="dark min-h-screen">
         {children}
         <Scripts />
       </body>
@@ -108,12 +97,59 @@ function RootShell({ children }: { children: React.ReactNode }) {
   );
 }
 
+function BottomNav() {
+  const location = useLocation();
+  const path = location.pathname;
+  const tabs = [
+    { to: "/", label: "Today", icon: "🏠" },
+    { to: "/analytics", label: "Stats", icon: "📈" },
+    { to: "/new", label: "", icon: "+", primary: true },
+    { to: "/social", label: "Friends", icon: "👯" },
+    { to: "/settings", label: "Settings", icon: "⚙️" },
+  ];
+  return (
+    <nav className="fixed bottom-0 left-1/2 z-40 w-full max-w-[480px] -translate-x-1/2 px-3 pb-[max(env(safe-area-inset-bottom),12px)] pt-2">
+      <div className="glass card-elev flex items-center justify-around rounded-full border border-border px-2 py-1.5">
+        {tabs.map((t) => {
+          const active = path === t.to || (t.to !== "/" && path.startsWith(t.to));
+          if (t.primary) {
+            return (
+              <Link
+                key={t.to}
+                to={t.to}
+                className="-mt-6 flex h-14 w-14 items-center justify-center rounded-full bg-accent text-2xl font-bold text-accent-foreground ring-accent transition-transform active:scale-95"
+                aria-label="New pact"
+              >
+                {t.icon}
+              </Link>
+            );
+          }
+          return (
+            <Link
+              key={t.to}
+              to={t.to}
+              className={`flex flex-1 flex-col items-center gap-0.5 rounded-full px-2 py-2 text-[11px] font-medium transition-colors ${
+                active ? "text-accent" : "text-muted-foreground"
+              }`}
+            >
+              <span className="text-lg leading-none">{t.icon}</span>
+              <span>{t.label}</span>
+            </Link>
+          );
+        })}
+      </div>
+    </nav>
+  );
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-
   return (
     <QueryClientProvider client={queryClient}>
-      <Outlet />
+      <div className="mx-auto min-h-screen w-full max-w-[480px] pb-32">
+        <Outlet />
+        <BottomNav />
+      </div>
     </QueryClientProvider>
   );
 }
