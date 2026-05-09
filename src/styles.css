@@ -118,6 +118,24 @@
   h1, h2, h3, .display { font-family: var(--font-display); letter-spacing: -0.02em; }
 }
 
+@layer components {
+  .input {
+    width: 100%;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    color: var(--color-foreground);
+    padding: 0.85rem 1rem;
+    border-radius: 0.85rem;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .input:focus {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-accent) 25%, transparent);
+  }
+}
+
 @layer utilities {
   .glass {
     background: color-mix(in oklab, var(--surface) 75%, transparent);
