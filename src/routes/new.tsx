@@ -1,6 +1,8 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { pactStore, VERIFICATION_META, type Verification } from "@/lib/pact-store";
+import { accountStore } from "@/lib/account-store";
+import { useAccounts } from "@/lib/use-accounts";
 
 export const Route = createFileRoute("/new")({
   head: () => ({
@@ -26,11 +28,14 @@ const HABIT_PRESETS: Array<{
   { title: "No YouTube Shorts", desc: "Screen Time on Shorts", type: "break", verification: "screentime_youtube" },
 ];
 
-type Step = 1 | 2 | 3 | 4;
+type Step = 1 | 2 | 3 | 4 | 5;
 
 function NewPact() {
   const nav = useNavigate();
   const [step, setStep] = useState<Step>(1);
+  const [signing, setSigning] = useState(false);
+  const accounts = useAccounts();
+  const currentAccount = accountStore.current();
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -41,18 +46,25 @@ function NewPact() {
     recipientName: "",
     recipientHandle: "",
     recipientKind: "person" as "person" | "charity",
+    recipientAccountId: "",
     graceDays: 0,
   });
   const set = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
 
-  const next = () => setStep((s) => (Math.min(4, s + 1) as Step));
+  const next = () => setStep((s) => (Math.min(5, s + 1) as Step));
   const back = () => (step === 1 ? nav({ to: "/" }) : setStep((s) => (Math.max(1, s - 1) as Step)));
 
+  const partnerAccounts = accounts.filter((account) => account.id !== currentAccount.id);
+  const selectedPartner = partnerAccounts.find((account) => account.id === form.recipientAccountId);
+  const hasFunds = currentAccount.balance >= form.stake;
+
   const submit = () => {
-    if (!form.title || !form.recipientName) return;
+    if (!form.title || !form.recipientName || !hasFunds) return;
     pactStore.create({
       ...form,
+      ownerAccountId: currentAccount.id,
+      recipientAccountId: selectedPartner?.id,
       startDate: new Date().toISOString().slice(0, 10),
     });
     nav({ to: "/" });
@@ -63,7 +75,7 @@ function NewPact() {
       <div className="flex items-center justify-between">
         <button onClick={back} className="text-sm text-muted-foreground">← Back</button>
         <div className="flex gap-1.5">
-          {[1, 2, 3, 4].map((n) => (
+          {[1, 2, 3, 4, 5].map((n) => (
             <div
               key={n}
               className={`h-1.5 w-8 rounded-full ${
@@ -278,6 +290,31 @@ function NewPact() {
               onChange={(e) => set("recipientName", e.target.value)}
             />
           </Field>
+          {form.recipientKind === "person" && partnerAccounts.length > 0 && (
+            <div className="rounded-3xl border border-border bg-surface p-4 text-sm text-muted-foreground">
+              <div className="mb-2 font-semibold">Choose a partner account</div>
+              <div className="grid gap-2">
+                {partnerAccounts.map((account) => (
+                  <button
+                    key={account.id}
+                    onClick={() => {
+                      set("recipientAccountId", account.id);
+                      set("recipientName", account.name);
+                      set("recipientHandle", account.handle);
+                    }}
+                    className={`rounded-2xl border px-4 py-3 text-left ${
+                      form.recipientAccountId === account.id
+                        ? "border-accent bg-accent/10 text-accent"
+                        : "border-border bg-surface"
+                    }`}
+                  >
+                    <div className="font-semibold">{account.name}</div>
+                    <div className="text-[11px] text-muted-foreground">{account.handle}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           <Field label={form.recipientKind === "person" ? "Email or @handle" : "Website"}>
             <input
               className="input"
@@ -297,15 +334,69 @@ function NewPact() {
             </div>
           </div>
 
-          <PrimaryAction
-            disabled={!form.recipientName}
-            onClick={submit}
-          >
-            Lock in pact — ${form.stake}
+          <PrimaryAction disabled={!form.recipientName} onClick={next}>
+            Review contract
           </PrimaryAction>
           <Link to="/" className="block text-center text-xs text-muted-foreground">
             Cancel
           </Link>
+        </Step>
+      )}
+
+      {step === 5 && (
+        <Step
+          title="Commitment contract"
+          subtitle="This is a binding agreement. Sign it to lock in your pact."
+        >
+          <div className="relative overflow-hidden rounded-[2rem] border border-border bg-surface/80 p-6 shadow-[0_30px_80px_-50px_rgba(255,80,80,0.35)]">
+            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-accent via-warning to-danger opacity-70" />
+            <div className="space-y-4 text-sm text-foreground">
+              <div className="rounded-3xl border border-border bg-background/70 p-5">
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Habit</div>
+                <div className="mt-2 text-lg font-semibold">{form.title || "Untitled commitment"}</div>
+                <p className="mt-1 text-xs text-muted-foreground">{form.description || "Your pledge is the contract."}</p>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <ContractRow label="Stake" value={`$${form.stake}`} />
+                <ContractRow label="Duration" value={`${form.duration} days`} />
+                <ContractRow label="Partner" value={form.recipientName || "—"} />
+                <ContractRow label="Deadline" value={new Date(new Date().setDate(new Date().getDate() + form.duration - 1)).toLocaleDateString(undefined, { month: "short", day: "numeric" })} />
+              </div>
+
+              <div className="rounded-3xl border border-accent/15 bg-accent/5 p-4 text-xs text-muted-foreground">
+                This contract frames your behavior: you are choosing loss over comfort, and your partner is watching every step.
+              </div>
+
+              <button
+                onClick={() => {
+                  if (signing) return;
+                  setSigning(true);
+                  setTimeout(submit, 900);
+                }}
+                className="w-full rounded-full bg-accent py-4 text-sm font-semibold text-accent-foreground ring-accent transition hover:brightness-110 disabled:opacity-40 disabled:ring-0"
+                disabled={signing || !hasFunds}
+              >
+                {signing ? "Signing contract…" : "Sign contract"}
+              </button>
+              {!hasFunds && (
+                <div className="rounded-2xl border border-danger/20 bg-danger/10 p-3 text-sm text-danger">
+                  Your account balance is too low to cover this stake. Deposit funds in Settings before signing.
+                </div>
+              )}
+
+              <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                <span>✍️</span>
+                <span>Signing makes this feel real: you are becoming someone who keeps commitments.</span>
+              </div>
+            </div>
+
+            {signing && (
+              <div className="stamp absolute right-6 top-6 text-5xl font-black uppercase tracking-[0.35em] text-danger/90">
+                signed
+              </div>
+            )}
+          </div>
         </Step>
       )}
     </div>
@@ -348,6 +439,15 @@ function Mini({ label, value }: { label: string; value: string }) {
     <div className="rounded-xl bg-surface/70 p-2">
       <div className="display text-base font-bold">{value}</div>
       <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
+    </div>
+  );
+}
+
+function ContractRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-3xl border border-border bg-card p-4">
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className="mt-2 text-base font-semibold">{value}</div>
     </div>
   );
 }

@@ -1,10 +1,13 @@
+import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { accountStore } from "@/lib/account-store";
+import { useAccounts } from "@/lib/use-accounts";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({
     meta: [
       { title: "Settings — Pact" },
-      { name: "description", content: "Connect Strava, Apple Health, Screen Time, and your payment method." },
+      { name: "description", content: "Manage your Pact account, wallet balance, and trusted partners." },
     ],
   }),
   component: Settings,
@@ -18,13 +21,19 @@ const INTEGRATIONS = [
   { name: "Android Digital Wellbeing", emoji: "🤖", desc: "App usage limits", connected: false },
 ];
 
-const PAYMENTS = [
-  { name: "Stripe", emoji: "💳", desc: "Hold & transfer your stake", connected: true },
-  { name: "Venmo", emoji: "💸", desc: "Pay friends instantly", connected: false },
-  { name: "PayPal", emoji: "🅿️", desc: "Backup payout method", connected: false },
-];
-
 function Settings() {
+  const accounts = useAccounts();
+  const current = accountStore.current();
+  const [depositValue, setDepositValue] = useState(100);
+  const [newName, setNewName] = useState("");
+  const [newHandle, setNewHandle] = useState("");
+  const [newBalance, setNewBalance] = useState(50);
+
+  const partnerAccounts = useMemo(
+    () => accounts.filter((account) => account.id !== current?.id),
+    [accounts, current]
+  );
+
   return (
     <div className="px-5 pt-8">
       <div className="anim-up">
@@ -32,25 +41,109 @@ function Settings() {
         <h1 className="display text-3xl font-bold">Settings</h1>
       </div>
 
-      <div className="anim-up mt-5 flex items-center gap-4 rounded-3xl border border-border bg-card p-5 card-elev">
-        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-accent/20 text-2xl">
-          🎯
+      <div className="anim-up mt-5 rounded-3xl border border-border bg-card p-5 card-elev">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-4">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-accent/15 text-2xl">💼</div>
+            <div>
+              <div className="text-sm font-semibold">{current?.name || "Your account"}</div>
+              <div className="text-xs text-muted-foreground">{current?.handle || "@you"}</div>
+            </div>
+          </div>
+          <div className="rounded-3xl bg-surface px-4 py-3 text-sm">
+            <div className="text-muted-foreground">Available balance</div>
+            <div className="mt-1 text-2xl font-bold text-accent">
+              ${current?.balance.toFixed(2) ?? "0.00"}
+            </div>
+          </div>
         </div>
-        <div className="flex-1">
-          <div className="font-semibold">Your Pact account</div>
-          <div className="text-xs text-muted-foreground">you@example.com</div>
+
+        <div className="mt-5 grid gap-3 sm:grid-cols-3">
+          {[100, 250, 500].map((amount) => (
+            <button
+              key={amount}
+              onClick={() => accountStore.deposit(current.id, amount)}
+              className="rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-semibold hover:bg-surface-2"
+            >
+              Deposit ${amount}
+            </button>
+          ))}
         </div>
-        <button className="rounded-full border border-border px-3 py-1.5 text-xs">Edit</button>
+
+        <div className="mt-4 flex items-center gap-3">
+          <input
+            type="number"
+            value={depositValue}
+            onChange={(event) => setDepositValue(Number(event.target.value))}
+            className="input max-w-[120px]"
+            min={1}
+          />
+          <button
+            onClick={() => accountStore.deposit(current.id, depositValue)}
+            className="rounded-full bg-accent px-4 py-3 text-sm font-semibold text-accent-foreground ring-accent hover:brightness-105"
+          >
+            Top up
+          </button>
+        </div>
       </div>
+
+      <Section title="Accounts">
+        <div className="space-y-3">
+          {accounts.map((account) => (
+            <AccountRow
+              key={account.id}
+              account={account}
+              active={account.id === current?.id}
+              onSwitch={() => accountStore.setCurrent(account.id)}
+            />
+          ))}
+        </div>
+      </Section>
+
+      <Section title="Create partner account">
+        <div className="grid gap-3 sm:grid-cols-[1fr_1fr]">
+          <input
+            className="input"
+            placeholder="Name"
+            value={newName}
+            onChange={(event) => setNewName(event.target.value)}
+          />
+          <input
+            className="input"
+            placeholder="Handle"
+            value={newHandle}
+            onChange={(event) => setNewHandle(event.target.value)}
+          />
+        </div>
+        <div className="mt-3 flex items-center gap-3">
+          <input
+            type="number"
+            className="input max-w-[120px]"
+            min={0}
+            value={newBalance}
+            onChange={(event) => setNewBalance(Number(event.target.value))}
+          />
+          <button
+            disabled={!newName || !newHandle}
+            onClick={() => {
+              if (!newName || !newHandle) return;
+              accountStore.create({ name: newName, handle: newHandle, balance: newBalance });
+              setNewName("");
+              setNewHandle("");
+              setNewBalance(50);
+            }}
+            className="rounded-full bg-accent px-4 py-3 text-sm font-semibold text-accent-foreground ring-accent hover:brightness-105 disabled:opacity-40"
+          >
+            Add account
+          </button>
+        </div>
+        <p className="mt-2 text-xs text-muted-foreground">
+          Create an accountability partner account that can receive real stake transfers when commitments fail.
+        </p>
+      </Section>
 
       <Section title="Verification integrations">
         {INTEGRATIONS.map((i) => (
-          <Row key={i.name} {...i} />
-        ))}
-      </Section>
-
-      <Section title="Payments">
-        {PAYMENTS.map((i) => (
           <Row key={i.name} {...i} />
         ))}
       </Section>
@@ -85,6 +178,34 @@ function Section({ title, children }: { title: string; children: React.ReactNode
         {title}
       </h2>
       <div className="mt-3 space-y-2">{children}</div>
+    </div>
+  );
+}
+
+function AccountRow({
+  account,
+  active,
+  onSwitch,
+}: {
+  account: { id: string; name: string; handle: string; balance: number };
+  active: boolean;
+  onSwitch: () => void;
+}) {
+  return (
+    <div className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-4 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <div className="font-semibold">{account.name}</div>
+        <div className="text-xs text-muted-foreground">{account.handle}</div>
+        <div className="mt-2 text-sm">Balance: ${account.balance.toFixed(2)}</div>
+      </div>
+      <button
+        onClick={onSwitch}
+        className={`rounded-full px-4 py-2 text-sm font-semibold ${
+          active ? "bg-accent text-accent-foreground" : "border border-border bg-surface hover:bg-surface-2"
+        }`}
+      >
+        {active ? "Active" : "Switch"}
+      </button>
     </div>
   );
 }
@@ -126,9 +247,13 @@ function Toggle({ label, defaultOn }: { label: string; defaultOn?: boolean }) {
   return (
     <label className="flex items-center justify-between rounded-2xl border border-border bg-surface p-4">
       <span className="text-sm">{label}</span>
-      <input type="checkbox" defaultChecked={defaultOn} className="h-5 w-9 appearance-none rounded-full bg-surface-2 transition-colors checked:bg-accent relative cursor-pointer
-        before:content-[''] before:absolute before:top-0.5 before:left-0.5 before:h-4 before:w-4 before:rounded-full before:bg-white before:transition-transform
-        checked:before:translate-x-4" />
+      <input
+        type="checkbox"
+        defaultChecked={defaultOn}
+        className="h-5 w-9 appearance-none rounded-full bg-surface-2 transition-colors checked:bg-accent relative cursor-pointer
+          before:content-[''] before:absolute before:top-0.5 before:left-0.5 before:h-4 before:w-4 before:rounded-full before:bg-white before:transition-transform
+          checked:before:translate-x-4"
+      />
     </label>
   );
 }

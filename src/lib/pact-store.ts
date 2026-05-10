@@ -1,3 +1,5 @@
+import { accountStore } from "./account-store";
+
 export type Verification =
   | "strava"
   | "apple_health"
@@ -20,6 +22,16 @@ export type Pact = {
   recipientName: string;
   recipientHandle: string;
   recipientKind: "person" | "charity";
+  ownerAccountId?: string;
+  recipientAccountId?: string;
+  paidOut?: number;
+  settlementHistory?: Array<{
+    amount: number;
+    date: string;
+    toAccountId?: string;
+    toName: string;
+    kind: "person" | "charity";
+  }>;
   graceDays: number;
   // map of yyyy-mm-dd -> true (success) | false (miss) | undefined (pending)
   checkins: Record<string, boolean>;
@@ -49,12 +61,14 @@ export const pactStore = {
   get(id: string) {
     return read().find((p) => p.id === id);
   },
-  create(input: Omit<Pact, "id" | "createdAt" | "checkins">) {
+  create(input: Omit<Pact, "id" | "createdAt" | "checkins" | "paidOut" | "settlementHistory">) {
     const p: Pact = {
       ...input,
       id: crypto.randomUUID(),
       createdAt: new Date().toISOString(),
       checkins: {},
+      paidOut: 0,
+      settlementHistory: [],
     };
     write([p, ...read()]);
     return p;
@@ -64,11 +78,42 @@ export const pactStore = {
   },
   checkIn(id: string, dateKey: string, success: boolean) {
     write(
-      read().map((p) =>
-        p.id === id
-          ? { ...p, checkins: { ...p.checkins, [dateKey]: success } }
-          : p
-      )
+      read().map((p) => {
+        if (p.id !== id) return p;
+        const updated = { ...p, checkins: { ...p.checkins, [dateKey]: success } };
+        if (!success) {
+          const missed = Object.values(updated.checkins).filter((v) => v === false).length;
+          const perDay = updated.stake / updated.duration;
+          const currentForfeited = Math.min(
+            updated.stake,
+            perDay * Math.max(0, missed - updated.graceDays)
+          );
+          const transferAmount = Math.max(0, currentForfeited - (updated.paidOut ?? 0));
+          if (transferAmount > 0 && updated.ownerAccountId) {
+            if (updated.recipientKind === "person" && updated.recipientAccountId) {
+              accountStore.transfer(
+                updated.ownerAccountId,
+                updated.recipientAccountId,
+                transferAmount
+              );
+            } else {
+              accountStore.transfer(updated.ownerAccountId, null, transferAmount);
+            }
+            updated.paidOut = currentForfeited;
+            updated.settlementHistory = [
+              ...(updated.settlementHistory ?? []),
+              {
+                amount: transferAmount,
+                date: dateKey,
+                toAccountId: updated.recipientAccountId,
+                toName: updated.recipientName,
+                kind: updated.recipientKind,
+              },
+            ];
+          }
+        }
+        return updated;
+      })
     );
   },
 };

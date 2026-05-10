@@ -171,3 +171,23 @@
   to   { transform: translateY(0);   opacity: 1; }
 }
 .anim-up { animation: slide-up 320ms ease both; }
+
+@keyframes stamp-pulse {
+  0% { opacity: 0; transform: scale(0.88) rotate(-8deg); }
+  50% { opacity: 1; transform: scale(1.08) rotate(-2deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+.stamp { animation: stamp-pulse 0.9s ease-out both; filter: drop-shadow(0 0 20px rgba(255, 90, 90, 0.4)); }
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-6px); }
+  20%, 40%, 60%, 80% { transform: translateX(6px); }
+}
+.shake { animation: shake 0.75s ease-in-out both; }
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in { animation: fade-in 280ms ease both; }

@@ -13,6 +13,22 @@ export function PactCard({ pact }: { pact: Pact }) {
       : today === false
       ? "bg-danger/15 text-danger"
       : "bg-surface-2 text-muted-foreground";
+  const riskLevel =
+    s.atStake === 0
+      ? "Low"
+      : s.atStake < pact.stake * 0.25
+      ? "Medium"
+      : s.atStake < pact.stake * 0.6
+      ? "High"
+      : "Critical";
+  const riskClass =
+    riskLevel === "Low"
+      ? "bg-success/10 text-success"
+      : riskLevel === "Medium"
+      ? "bg-warning/10 text-warning"
+      : riskLevel === "High"
+      ? "bg-accent/10 text-accent"
+      : "bg-danger/10 text-danger";
 
   return (
     <Link
@@ -28,6 +44,10 @@ export function PactCard({ pact }: { pact: Pact }) {
               <span className="truncate">{meta.label}</span>
             </div>
             <h3 className="mt-1 truncate text-lg font-semibold">{pact.title}</h3>
+            <div className="mt-2 flex flex-wrap gap-2 text-[11px]">
+              <span className="rounded-full px-2.5 py-1 text-muted-foreground bg-surface-2">Watching {pact.recipientName}</span>
+              <span className={`rounded-full px-2.5 py-1 font-semibold ${riskClass}`}>{riskLevel} risk</span>
+            </div>
           </div>
           <div className="text-right">
             <div className="display text-2xl font-bold gradient-text">${pact.stake}</div>
