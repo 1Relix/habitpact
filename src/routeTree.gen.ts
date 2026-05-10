@@ -12,7 +12,9 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SocialRouteImport } from './routes/social'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as NewRouteImport } from './routes/new'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
+import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PactIdRouteImport } from './routes/pact.$id'
 
@@ -31,9 +33,19 @@ const NewRoute = NewRouteImport.update({
   path: '/new',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AnalyticsRoute = AnalyticsRouteImport.update({
   id: '/analytics',
   path: '/analytics',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -49,7 +61,9 @@ const PactIdRoute = PactIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/analytics': typeof AnalyticsRoute
+  '/login': typeof LoginRoute
   '/new': typeof NewRoute
   '/settings': typeof SettingsRoute
   '/social': typeof SocialRoute
@@ -57,7 +71,9 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/analytics': typeof AnalyticsRoute
+  '/login': typeof LoginRoute
   '/new': typeof NewRoute
   '/settings': typeof SettingsRoute
   '/social': typeof SocialRoute
@@ -66,7 +82,9 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/analytics': typeof AnalyticsRoute
+  '/login': typeof LoginRoute
   '/new': typeof NewRoute
   '/settings': typeof SettingsRoute
   '/social': typeof SocialRoute
@@ -74,13 +92,31 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/analytics' | '/new' | '/settings' | '/social' | '/pact/$id'
+  fullPaths:
+    | '/'
+    | '/about'
+    | '/analytics'
+    | '/login'
+    | '/new'
+    | '/settings'
+    | '/social'
+    | '/pact/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/analytics' | '/new' | '/settings' | '/social' | '/pact/$id'
+  to:
+    | '/'
+    | '/about'
+    | '/analytics'
+    | '/login'
+    | '/new'
+    | '/settings'
+    | '/social'
+    | '/pact/$id'
   id:
     | '__root__'
     | '/'
+    | '/about'
     | '/analytics'
+    | '/login'
     | '/new'
     | '/settings'
     | '/social'
@@ -89,7 +125,9 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AboutRoute: typeof AboutRoute
   AnalyticsRoute: typeof AnalyticsRoute
+  LoginRoute: typeof LoginRoute
   NewRoute: typeof NewRoute
   SettingsRoute: typeof SettingsRoute
   SocialRoute: typeof SocialRoute
@@ -119,11 +157,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/analytics': {
       id: '/analytics'
       path: '/analytics'
       fullPath: '/analytics'
       preLoaderRoute: typeof AnalyticsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -145,7 +197,9 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AboutRoute: AboutRoute,
   AnalyticsRoute: AnalyticsRoute,
+  LoginRoute: LoginRoute,
   NewRoute: NewRoute,
   SettingsRoute: SettingsRoute,
   SocialRoute: SocialRoute,

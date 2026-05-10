@@ -67,13 +67,14 @@ export const accountStore = {
   current() {
     const accounts = this.list();
     const currentId = readCurrentId();
+    if (!currentId) return null;
     const match = accounts.find((account) => account.id === currentId);
     if (match) return match;
     const fallback = accounts[0];
     writeCurrentId(fallback?.id ?? null);
-    return fallback;
+    return fallback ?? null;
   },
-  setCurrent(id: string) {
+  setCurrent(id: string | null) {
     writeCurrentId(id);
   },
   create(input: Omit<Account, "id" | "createdAt">) {
@@ -113,6 +114,16 @@ export const accountStore = {
       const to = this.get(toId);
       if (!to) return;
       this.update(toId, { balance: to.balance + withdrawAmount });
+    }
+  },
+  remove(id: string) {
+    const accounts = this.list();
+    const updated = accounts.filter((account) => account.id !== id);
+    writeAccounts(updated);
+    const currentId = readCurrentId();
+    if (currentId === id) {
+      const fallback = updated[0];
+      writeCurrentId(fallback?.id ?? null);
     }
   },
 };

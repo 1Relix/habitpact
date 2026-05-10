@@ -1,4 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useAuth } from "@/lib/auth-store";
+import { useAccounts } from "@/lib/use-accounts";
+import { accountStore } from "@/lib/account-store";
 import { usePacts } from "@/lib/use-pacts";
 import { pactStats } from "@/lib/pact-store";
 
@@ -13,7 +16,29 @@ export const Route = createFileRoute("/analytics")({
 });
 
 function Analytics() {
-  const pacts = usePacts();
+  const auth = useAuth();
+  useAccounts();
+  const currentAccount = accountStore.current();
+
+  if (!auth || !currentAccount) {
+    return (
+      <div className="px-5 pt-8 text-center">
+        <p className="text-sm text-muted-foreground">Stats are private to signed-in accounts.</p>
+        <h1 className="mt-3 text-3xl font-bold">Sign in to view your analytics</h1>
+        <p className="mx-auto mt-3 max-w-xl text-sm text-muted-foreground">
+          Your habit performance and success rate are shown only when you're signed in to a specific account.
+        </p>
+        <Link
+          to="/login"
+          className="mt-6 inline-flex items-center justify-center rounded-full bg-accent px-6 py-3 text-sm font-semibold text-accent-foreground ring-accent hover:brightness-105"
+        >
+          Sign in
+        </Link>
+      </div>
+    );
+  }
+
+  const pacts = usePacts(currentAccount.id);
   const totalSuccess = pacts.reduce((a, p) => a + pactStats(p).success, 0);
   const totalMissed = pacts.reduce((a, p) => a + pactStats(p).missed, 0);
   const totalDays = totalSuccess + totalMissed;

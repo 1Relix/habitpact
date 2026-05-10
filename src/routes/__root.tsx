@@ -9,6 +9,7 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 
+import { useAuth } from "@/lib/auth-store";
 import appCss from "../styles.css?url";
 
 function NotFoundComponent() {
@@ -148,16 +149,57 @@ function BottomNav() {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const auth = useAuth();
+  const location = useLocation();
+  const path = location.pathname;
+
+  const navItems = [
+    { to: "/", label: "Today" },
+    { to: "/analytics", label: "Stats" },
+    { to: "/about", label: "About" },
+    { to: "/social", label: "Friends" },
+    { to: "/settings", label: "Settings" },
+  ];
+
+  const isActive = (to: string) =>
+    to === "/" ? path === "/" : path.startsWith(to);
+
   return (
     <QueryClientProvider client={queryClient}>
       <div className="mx-auto min-h-screen w-full max-w-[480px] md:max-w-[1200px] md:px-6 pb-32">
         <div className="hidden md:flex items-center justify-between gap-4 rounded-3xl border border-border bg-surface/80 px-4 py-4 mb-6">
-          <div className="text-xl font-semibold">Pact</div>
-          <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-            <Link to="/" className="text-foreground transition hover:text-accent">Today</Link>
-            <Link to="/analytics" className="transition hover:text-accent">Stats</Link>
-            <Link to="/social" className="transition hover:text-accent">Friends</Link>
-            <Link to="/settings" className="transition hover:text-accent">Settings</Link>
+          <Link to="/" className="inline-flex items-center gap-3 rounded-3xl bg-surface p-2 transition hover:bg-surface-2">
+            <div className="flex h-11 w-11 items-center justify-center rounded-[1.5rem] bg-accent/10 text-accent shadow-sm">
+              <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" aria-hidden="true">
+                <path d="M12 2.2C8.2 6.2 5.5 9.8 5.5 13.2A6.5 6.5 0 0 0 12 19.7 6.5 6.5 0 0 0 18.5 13.2c0-3.4-2.7-7-6.5-11z" fill="currentColor" />
+              </svg>
+            </div>
+            <div className="text-lg font-semibold tracking-tight">Pact</div>
+          </Link>
+          <div className="flex flex-wrap items-center gap-3 text-sm">
+            {navItems.map((item) => (
+              <Link
+                key={item.to}
+                to={item.to}
+                className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                  isActive(item.to)
+                    ? "bg-accent text-accent-foreground shadow-[0_0_0_1px_rgba(255,255,255,0.08)]"
+                    : "text-muted-foreground hover:text-accent hover:border hover:border-border"
+                }`}
+              >
+                {item.label}
+              </Link>
+            ))}
+            <Link
+              to="/login"
+              className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                path === "/login"
+                  ? "border-accent text-accent"
+                  : "border-border text-muted-foreground hover:border-accent hover:text-accent"
+              }`}
+            >
+              {auth ? "Profile" : "Login"}
+            </Link>
           </div>
           <Link
             to="/new"

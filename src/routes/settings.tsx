@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { accountStore } from "@/lib/account-store";
+import { authStore, useAuth } from "@/lib/auth-store";
+import { pactStore } from "@/lib/pact-store";
 import { useAccounts } from "@/lib/use-accounts";
 
 export const Route = createFileRoute("/settings")({
@@ -22,6 +24,8 @@ const INTEGRATIONS = [
 ];
 
 function Settings() {
+  const navigate = useNavigate();
+  const auth = useAuth();
   const accounts = useAccounts();
   const current = accountStore.current();
   const [depositValue, setDepositValue] = useState(100);
@@ -33,6 +37,24 @@ function Settings() {
     () => accounts.filter((account) => account.id !== current?.id),
     [accounts, current]
   );
+
+  if (!auth || !current) {
+    return (
+      <div className="px-5 pt-8 text-center">
+        <p className="text-sm text-muted-foreground">Settings are available only when signed in.</p>
+        <h1 className="mt-3 text-3xl font-bold">Sign in to manage your account</h1>
+        <p className="mx-auto mt-3 max-w-xl text-sm text-muted-foreground">
+          Your account preferences, balance, and linked pacts are tied to the signed-in profile.
+        </p>
+        <Link
+          to="/login"
+          className="mt-6 inline-flex items-center justify-center rounded-full bg-accent px-6 py-3 text-sm font-semibold text-accent-foreground ring-accent hover:brightness-105"
+        >
+          Sign in
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="px-5 pt-8">
@@ -156,10 +178,29 @@ function Settings() {
       </Section>
 
       <Section title="Danger zone">
-        <button className="w-full rounded-2xl border border-danger/30 bg-danger/5 p-4 text-left text-sm font-semibold text-danger">
+        <button
+          onClick={() => {
+            void authStore.logout();
+            navigate({ to: "/login" });
+          }}
+          className="w-full rounded-2xl border border-danger/30 bg-danger/5 p-4 text-left text-sm font-semibold text-danger"
+        >
           Sign out
         </button>
-        <button className="w-full rounded-2xl border border-danger/30 bg-danger/10 p-4 text-left text-sm font-semibold text-danger">
+        <button
+          onClick={() => {
+            if (!current) return;
+            const confirmed = window.confirm(
+              `Delete ${current.name} (${current.handle})? This cannot be undone.`
+            );
+            if (!confirmed) return;
+            pactStore.removeByOwner(current.id);
+            accountStore.remove(current.id);
+            void authStore.logout();
+            navigate({ to: "/login" });
+          }}
+          className="w-full rounded-2xl border border-danger/30 bg-danger/10 p-4 text-left text-sm font-semibold text-danger"
+        >
           Delete account
         </button>
       </Section>
@@ -198,14 +239,31 @@ function AccountRow({
         <div className="text-xs text-muted-foreground">{account.handle}</div>
         <div className="mt-2 text-sm">Balance: ${account.balance.toFixed(2)}</div>
       </div>
-      <button
-        onClick={onSwitch}
-        className={`rounded-full px-4 py-2 text-sm font-semibold ${
-          active ? "bg-accent text-accent-foreground" : "border border-border bg-surface hover:bg-surface-2"
-        }`}
-      >
-        {active ? "Active" : "Switch"}
-      </button>
+      <div className="flex flex-wrap gap-3 sm:items-center">
+        <button
+          onClick={onSwitch}
+          className={`rounded-full px-4 py-2 text-sm font-semibold ${
+            active ? "bg-accent text-accent-foreground" : "border border-border bg-surface hover:bg-surface-2"
+          }`}
+        >
+          {active ? "Active" : "Switch"}
+        </button>
+        {!active ? (
+          <button
+            onClick={() => {
+              const confirmed = window.confirm(
+                `Delete ${account.name} (${account.handle})? This will remove the account from Pact.`
+              );
+              if (!confirmed) return;
+              pactStore.removeByOwner(account.id);
+              accountStore.remove(account.id);
+            }}
+            className="rounded-full border border-danger/30 px-4 py-2 text-sm font-semibold text-danger hover:bg-danger/10"
+          >
+            Remove
+          </button>
+        ) : null}
+      </div>
     </div>
   );
 }

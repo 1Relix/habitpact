@@ -1,6 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { pactStore, pactStats, todayKey, VERIFICATION_META } from "@/lib/pact-store";
+import { accountStore } from "@/lib/account-store";
+import { useAccounts } from "@/lib/use-accounts";
 import { usePacts } from "@/lib/use-pacts";
 
 export const Route = createFileRoute("/pact/$id")({
@@ -17,7 +19,9 @@ function PactDetail() {
   const { id } = Route.useParams();
   const nav = useNavigate();
   const [partnerApproved, setPartnerApproved] = useState(false);
-  const pacts = usePacts();
+  useAccounts();
+  const currentAccount = accountStore.current();
+  const pacts = usePacts(currentAccount?.id);
   const pact = pacts.find((p) => p.id === id);
 
   if (!pact) {
@@ -186,28 +190,6 @@ function PactDetail() {
         </div>
       </div>
 
-      <div className="mt-4 rounded-3xl border border-border bg-card p-5">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Demo tools</div>
-            <div className="font-semibold">Simulate an outcome instantly</div>
-          </div>
-        </div>
-        <div className="mt-4 grid gap-2 sm:grid-cols-2">
-          <button
-            onClick={() => pactStore.checkIn(pact.id, tk, true)}
-            className="rounded-2xl bg-success px-4 py-4 text-sm font-semibold text-success-foreground hover:brightness-105"
-          >
-            Force success
-          </button>
-          <button
-            onClick={() => pactStore.checkIn(pact.id, tk, false)}
-            className="rounded-2xl bg-danger px-4 py-4 text-sm font-semibold text-danger-foreground hover:brightness-110"
-          >
-            Force failure
-          </button>
-        </div>
-      </div>
     </div>
   );
 }

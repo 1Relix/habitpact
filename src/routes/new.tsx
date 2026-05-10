@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { useAuth } from "@/lib/auth-store";
 import { pactStore, VERIFICATION_META, type Verification } from "@/lib/pact-store";
 import { accountStore } from "@/lib/account-store";
 import { useAccounts } from "@/lib/use-accounts";
@@ -31,10 +32,40 @@ const HABIT_PRESETS: Array<{
 type Step = 1 | 2 | 3 | 4 | 5;
 
 function NewPact() {
+  const auth = useAuth();
   const nav = useNavigate();
   const [step, setStep] = useState<Step>(1);
   const [signing, setSigning] = useState(false);
   const accounts = useAccounts();
+
+  if (!auth) {
+    return (
+      <div className="px-5 pt-8 pb-24">
+        <div className="mx-auto max-w-3xl rounded-[2rem] border border-border bg-card p-8 shadow-[0_35px_80px_-40px_rgba(0,0,0,0.45)] text-center">
+          <p className="text-[11px] uppercase tracking-[0.32em] text-muted-foreground">Member only</p>
+          <h1 className="mt-3 text-4xl font-bold">Create a pact after signing in</h1>
+          <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-muted-foreground">
+            New pacts, account balance, and stake management are only available in a signed-in session.
+          </p>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
+            <Link
+              to="/login"
+              className="rounded-full bg-accent px-6 py-4 text-sm font-semibold text-accent-foreground ring-accent hover:brightness-105"
+            >
+              Sign in now
+            </Link>
+            <Link
+              to="/about"
+              className="inline-flex items-center justify-center rounded-full border border-border px-6 py-4 text-sm font-semibold transition hover:border-accent hover:text-accent"
+            >
+              Learn about Pact
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const currentAccount = accountStore.current();
   const [form, setForm] = useState({
     title: "",

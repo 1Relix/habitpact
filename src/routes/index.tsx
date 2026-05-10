@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useAuth } from "@/lib/auth-store";
 import { useAccounts } from "@/lib/use-accounts";
 import { accountStore } from "@/lib/account-store";
 import { usePacts } from "@/lib/use-pacts";
@@ -22,16 +23,22 @@ function Greeting() {
 }
 
 function Dashboard() {
+  const auth = useAuth();
   const nav = useNavigate();
   const accounts = useAccounts();
+
+  if (!auth) {
+    return <GuestLanding />;
+  }
+
   const currentAccount =
     accountStore.current() ?? accounts[0] ?? {
       id: "guest",
-      name: "Demo account",
-      handle: "@demo",
+      name: "Your account",
+      handle: "@you",
       balance: 0,
     };
-  const pacts = usePacts();
+  const pacts = usePacts(currentAccount.id);
   const totalAtRisk = pacts.reduce((a, p) => a + pactStats(p).atStake, 0);
   const totalSuccess = pacts.reduce((a, p) => a + pactStats(p).success, 0);
   const totalMissed = pacts.reduce((a, p) => a + pactStats(p).missed, 0);
@@ -55,33 +62,6 @@ function Dashboard() {
       : riskLevel === "High"
       ? "bg-accent/10 text-accent"
       : "bg-danger/10 text-danger";
-
-  const createDemoMode = () => {
-    const startDate = todayKey();
-    const demo = pactStore.create({
-      title: "Daily cold shower",
-      description: "Commit to the shock therapy before breakfast.",
-      type: "build",
-      verification: "manual",
-      stake: 120,
-      duration: 14,
-      recipientName: "Demo Buddy",
-      recipientHandle: "@demo",
-      recipientKind: "person",
-      recipientAccountId: accounts.find((account) => account.handle === "@demo")?.id,
-      ownerAccountId: currentAccount.id,
-      graceDays: 1,
-      startDate,
-    });
-
-    [3, 2, 1].forEach((offset) => {
-      const d = new Date();
-      d.setDate(d.getDate() - offset);
-      pactStore.checkIn(demo.id, dayKey(d), true);
-    });
-    pactStore.checkIn(demo.id, dayKey(new Date()), false);
-    nav({ to: "/pact/$id", params: { id: demo.id } });
-  };
 
   return (
     <div className="px-5 pt-8">
@@ -109,12 +89,6 @@ function Dashboard() {
             className="rounded-full bg-accent px-5 py-3 text-sm font-semibold text-accent-foreground ring-accent hover:brightness-105"
           >
             New agreement
-          </button>
-          <button
-            onClick={createDemoMode}
-            className="rounded-full border border-border bg-surface px-5 py-3 text-sm font-semibold text-foreground transition hover:bg-surface-2"
-          >
-            Demo mode
           </button>
         </div>
 
@@ -189,6 +163,61 @@ function StatPill({
       <div className="mt-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">
         {label}
       </div>
+    </div>
+  );
+}
+
+function GuestLanding() {
+  return (
+    <div className="px-5 pt-8 pb-24">
+      <div className="mx-auto max-w-3xl rounded-[2rem] border border-border bg-card p-8 shadow-[0_35px_80px_-40px_rgba(0,0,0,0.45)]">
+        <div className="text-center">
+          <p className="text-[11px] uppercase tracking-[0.32em] text-muted-foreground">Welcome to Pact</p>
+          <h1 className="mt-3 text-4xl font-bold">Keep your habits with real commitment.</h1>
+          <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-muted-foreground">
+            Sign in to see your balance, active pacts, and the new pact builder. Your progress and stakes are private until you log in.
+          </p>
+        </div>
+
+        <div className="mt-8 grid gap-4 sm:grid-cols-[1fr_1fr]">
+          <Link
+            to="/login"
+            className="rounded-full bg-accent px-6 py-4 text-sm font-semibold text-accent-foreground ring-accent hover:brightness-105"
+          >
+            Sign in to continue
+          </Link>
+          <Link
+            to="/about"
+            className="inline-flex items-center justify-center rounded-full border border-border px-6 py-4 text-sm font-semibold transition hover:border-accent hover:text-accent"
+          >
+            Learn about Pact
+          </Link>
+        </div>
+
+        <div className="mt-10 grid gap-3 sm:grid-cols-3">
+          <FeatureCard
+            title="Behavioral accountability"
+            description="Make your habit stick by putting real money on the line and checking in consistently."
+          />
+          <FeatureCard
+            title="Trust-based stakes"
+            description="Send your stake to someone you trust if you miss a day. That extra accountability changes everything."
+          />
+          <FeatureCard
+            title="Fast local login"
+            description="Sign in quickly with an email or handle and keep your account saved in the browser."
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FeatureCard({ title, description }: { title: string; description: string }) {
+  return (
+    <div className="rounded-3xl border border-border bg-surface p-5 text-left">
+      <div className="text-sm font-semibold">{title}</div>
+      <p className="mt-2 text-sm leading-6 text-muted-foreground">{description}</p>
     </div>
   );
 }

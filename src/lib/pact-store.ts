@@ -57,7 +57,10 @@ function write(pacts: Pact[]) {
 }
 
 export const pactStore = {
-  list: read,
+  list(ownerAccountId?: string) {
+    const pacts = read();
+    return ownerAccountId ? pacts.filter((p) => p.ownerAccountId === ownerAccountId) : pacts;
+  },
   get(id: string) {
     return read().find((p) => p.id === id);
   },
@@ -75,6 +78,9 @@ export const pactStore = {
   },
   remove(id: string) {
     write(read().filter((p) => p.id !== id));
+  },
+  removeByOwner(ownerAccountId: string) {
+    write(read().filter((p) => p.ownerAccountId !== ownerAccountId));
   },
   checkIn(id: string, dateKey: string, success: boolean) {
     write(
